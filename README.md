@@ -1,60 +1,18 @@
-requestInfo = helpers.analyzeRequest(messageInfo.getRequest())
-headers = requestInfo.getHeaders()
-requestBody = messageInfo.getRequest()[requestInfo.getBodyOffset():]
-url = messageInfo.getUrl()
-method = requestInfo.getMethod().upper()
-path = url.getPath()
+![2025-04-13_18-13-13](https://github.com/user-attachments/assets/0f1fcb24-43be-4650-812b-7d752a6f5929)
 
-#  Удалено URL-кодирование параметров
-query_string = url.getQuery()
-if query_string:
-    path += "?" + query_string
+Механизм безопасности API-запросов. Этот механизм использует ключи RSA для проверки целостности запросов.
 
-msg = helpers.bytesToString(requestBody)
+В рассматриваемом программном обеспечении реализован механизм безопасности, который обеспечивает целостность передаваемого сообщения с помощью подписи RSA. Формируется новый заголовок XX-Signature, который вставляется в запрос.
+1.	Приватный ключ - хранится в секрете у клиента и используется для создания цифровой подписи каждого отправляемого API-запроса. 
 
-# Construct signature input string with UTF-8 encoding and explicit newline.
-signature_input = "{}\n{}\n{}".format(method, path, msg)
+2.	Ключ для проверки - сервер подписывает уведомления своим приватным ключом, а торговец проверяет их публичным ключом. 
 
-print('signature_input', signature_input)
 
-# Use openssl via subprocess.  Correctly handle encoding and decoding.
-try:
-    cmd = "openssl dgst -sha256 -sign {}".format(PRIVATE_KEY)  # Use .format() instead of f-string
-    process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    output, err = process.communicate(input=signature_input.encode('utf-8'))  # Encode input for openssl
 
-    if err:
-        raise Exception(err.decode('utf-8'))
+![i (1)](https://github.com/user-attachments/assets/5def6fc7-e7b3-4fd2-acea-1e890ede27fd)
 
-    signature_bytes = base64.b64encode(output).decode('utf-8').strip()  # Base64 encode the result
+Burp Suite работает с Jython. Jython - это реализация языка Python, которая работает на платформе Java Virtual Machine (JVM). Поскольку Jython взаимодействует с Java-кодом и использует Java-библиотеки, нужно использовать системные вызовы через библиотеку subprocess:
+![123](https://github.com/user-attachments/assets/d1405620-b8f9-4904-8023-97de1c8d23a3)
 
-    signature = signature_bytes
-except Exception as e:
-    print("Error creating signature: {}".format(e)) # Use .format() instead of f-string
-    signature = ""  # or handle the error in another way, e.g., return None
-
-new_sign = '{}: {}'.format(SIGNATURE_HEADER, signature)
-print('Adding new', new_sign)
-
-newHeaders = []
-print("Original headers:", headers)
-# Remove existing XX-Signature headers
-for h in headers:
-    if SIGNATURE_HEADER not in h:
-        newHeaders.append(h)
-    else:
-        print('Header exist, removing: ', h)
-print("Headers after removing existing signatures:", newHeaders)
-
-print("New signature header:", new_sign)
-
-# Insert the new XX-Signature header as the *second* header in the list.
-if len(newHeaders) > 0:
-    newHeaders.insert(1, new_sign)
-else:
-    newHeaders.append(new_sign)  # if there are no headers, put as first
-
-print("Final headers:", newHeaders)
-request = helpers.buildHttpMessage(newHeaders, requestBody)
-
-messageInfo.setRequest(request)
+Иллюстрация работы плагина и скрипта
+![2025-04-14_10-56-35](https://github.com/user-attachments/assets/1ae74fd0-1001-4f3d-bd76-61d1356ff465)
