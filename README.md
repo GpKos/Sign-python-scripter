@@ -35,3 +35,4 @@ Burp Suite работает с Jython. Jython - это реализация яз
 ## Дополнительный материал:
 - [подробнее о плагине](https://github.com/PortSwigger/python-scripter "Github")
 - [примеры использования](https://github.com/lanmaster53/pyscripter-er/tree/master/snippets "Github")
+- [Более подробное описание кейса](https://habr.com/ru/articles/900444/)
